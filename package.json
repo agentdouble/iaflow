@@ -1,0 +1,53 @@
+{
+  "name": "iaflow",
+  "version": "0.1.0",
+  "description": "Schedule AI agents (Claude, Codex, OpenCode) on macOS",
+  "productName": "IAFlow",
+  "main": "dist-electron/main/index.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && electron-builder --mac dir",
+    "build:dmg": "vite build && electron-builder --mac dmg",
+    "rebuild": "electron-rebuild -f -w node-pty",
+    "postinstall": "electron-builder install-app-deps",
+    "start": "vite"
+  },
+  "keywords": ["agents", "claude", "codex", "scheduler", "electron"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "node-pty": "^1.1.0-beta22",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "build": {
+    "appId": "com.iaflow.app",
+    "productName": "IAFlow",
+    "directories": { "output": "release" },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "asarUnpack": ["node_modules/node-pty/**/*"],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dir"]
+    }
+  }
+}
