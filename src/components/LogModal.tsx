@@ -14,17 +14,23 @@ export function LogModal({ flow, run, onClose }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    if (run.logTimestamp) {
+    const load = () => {
+      if (!run.logTimestamp) {
+        setLog('\r\n  Log non disponible.\r\n');
+        return;
+      }
       window.api.flow.getRunLog(flow.id, run.logTimestamp).then((data) => {
         if (!cancelled) setLog(data ?? '\r\n  Log non disponible.\r\n');
       });
-    } else {
-      setLog('\r\n  Log non disponible.\r\n');
-    }
+    };
+    load();
+    const timer =
+      run.status === 'running' ? window.setInterval(load, 1000) : undefined;
     return () => {
       cancelled = true;
+      if (timer) window.clearInterval(timer);
     };
-  }, [flow.id, run.logTimestamp]);
+  }, [flow.id, run.logTimestamp, run.status]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

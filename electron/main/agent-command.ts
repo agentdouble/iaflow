@@ -13,8 +13,10 @@ const AGENT_CONFIG: Record<AgentType, AgentConfig> = {
     promptPrefix: '-p',
   },
   codex: {
-    permModes: ['--approval-mode auto-edit', '--approval-mode full-auto'],
-    flags: '--quiet',
+    permModes: [
+      '--sandbox workspace-write --ask-for-approval never exec --skip-git-repo-check',
+      '--sandbox danger-full-access --ask-for-approval never exec --skip-git-repo-check',
+    ],
   },
   opencode: {
     promptPrefix: '-p',

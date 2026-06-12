@@ -2,6 +2,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron';
 import type { Flow, CategoryData } from '../shared/types';
 import { flowManager } from './flow-manager';
 import { PtyManager } from './pty-manager';
+import { listAgentMonitors } from './agent-monitor';
 
 export function registerIpc(pty: PtyManager): void {
   // Flow CRUD
@@ -14,6 +15,7 @@ export function registerIpc(pty: PtyManager): void {
   ipcMain.handle('flow:getRunLog', (_e, id: string, ts: string) =>
     flowManager.getRunLog(id, ts),
   );
+  ipcMain.handle('agents:list', () => listAgentMonitors());
 
   // Categories
   ipcMain.handle('flow:getCategories', () => flowManager.getCategories());

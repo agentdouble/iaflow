@@ -4,10 +4,14 @@
   "description": "Schedule AI agents (Claude, Codex, OpenCode) on macOS",
   "productName": "IAFlow",
   "main": "dist-electron/main/index.cjs",
+  "bin": {
+    "iaflow-hook": "bin/iaflow-hook.mjs"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build && electron-builder --mac dir",
     "build:dmg": "vite build && electron-builder --mac dmg",
+    "hook": "node bin/iaflow-hook.mjs",
     "rebuild": "electron-rebuild -f -w node-pty",
     "postinstall": "electron-builder install-app-deps",
     "start": "vite"

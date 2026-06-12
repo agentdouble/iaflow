@@ -45,10 +45,30 @@ export function FlowView() {
     ]);
     setFlows(list);
     setCatData(cats);
+    setLogModal((prev) => {
+      if (!prev) return prev;
+      const flow = list.find((f) => f.id === prev.flow.id);
+      if (!flow) return prev;
+      const run = flow.runs?.find((r) =>
+        prev.run.logTimestamp
+          ? r.logTimestamp === prev.run.logTimestamp
+          : r.timestamp === prev.run.timestamp,
+      );
+      return run ? { flow, run } : prev;
+    });
   }, []);
 
   useEffect(() => {
     void refresh();
+    const refreshTimer = window.setInterval(() => {
+      void refresh();
+    }, 2000);
+
+    const onFocus = () => {
+      void refresh();
+    };
+    window.addEventListener('focus', onFocus);
+
     void window.api.flow.getRunning().then((map) => {
       setRunningMap(map);
       setExpandedCards((prev) => {
@@ -78,6 +98,8 @@ export function FlowView() {
     });
 
     return () => {
+      window.clearInterval(refreshTimer);
+      window.removeEventListener('focus', onFocus);
       unsubStarted();
       unsubComplete();
     };

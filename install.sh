@@ -68,6 +68,22 @@ cp -R "$APP_PATH" "$DEST"
 # --- 7. Strip quarantine attribute so first launch is clean ---
 xattr -dr com.apple.quarantine "$DEST" 2>/dev/null || true
 
+# --- 8. Install the headless hook CLI for local hooks/watchers ---
+CLI_SRC="$SCRIPT_DIR/bin/iaflow-hook.mjs"
+if [ -f "$CLI_SRC" ]; then
+  chmod +x "$CLI_SRC"
+  mkdir -p "$HOME/.local/bin"
+  ln -sf "$CLI_SRC" "$HOME/.local/bin/iaflow-hook"
+  echo -e "${GREEN}==> Installed CLI at $HOME/.local/bin/iaflow-hook${NC}"
+
+  if [ -d "/usr/local/bin" ] && [ -w "/usr/local/bin" ]; then
+    ln -sf "$CLI_SRC" "/usr/local/bin/iaflow-hook"
+    echo -e "${GREEN}==> Installed CLI at /usr/local/bin/iaflow-hook${NC}"
+  else
+    echo -e "${YELLOW}--> Add $HOME/.local/bin to PATH if iaflow-hook is not found.${NC}"
+  fi
+fi
+
 echo -e "${GREEN}==> Installed!${NC}"
 echo -e "${GREEN}    Open with: open $DEST${NC}"
 echo -e "${GREEN}    Or from Spotlight: ⌘Space → IAFlow${NC}"

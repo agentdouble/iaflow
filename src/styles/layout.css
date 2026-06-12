@@ -12,6 +12,42 @@
   background: transparent;
 }
 
+.iaflow-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 20px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.iaflow-tabs button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.iaflow-tabs button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.iaflow-tabs button.is-active {
+  color: var(--text-primary);
+  background: var(--bg-active);
+  border-color: var(--border-color);
+}
+
+.iaflow-content {
+  min-height: 0;
+  flex: 1;
+}
+
 .iaflow-terminal-host {
   height: 100%;
   width: 100%;

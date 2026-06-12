@@ -1,4 +1,5 @@
 import type { Flow, FlowRun, Schedule, ScheduleType } from './types';
+import { isHookFlow } from './triggers';
 
 const MS_PER_HOUR = 3_600_000;
 
@@ -24,6 +25,8 @@ function notRunToday(lastRun: FlowRun | null, now: Date): boolean {
 }
 
 export function shouldRun(flow: Flow, now: Date): boolean {
+  if (isHookFlow(flow)) return false;
+
   const { schedule } = flow;
   if (!schedule) return false;
 

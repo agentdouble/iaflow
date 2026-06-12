@@ -159,6 +159,10 @@
 }
 
 .flow-dot-success { background: var(--green); }
+.flow-dot-running {
+  background: var(--yellow);
+  animation: flow-pulse 1.5s ease-in-out infinite;
+}
 .flow-dot-error { background: var(--red); }
 
 .flow-card-terminal {

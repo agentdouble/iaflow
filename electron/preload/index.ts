@@ -1,5 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Flow, CategoryData, RunningMap } from '../shared/types';
+import type {
+  AgentMonitorSnapshot,
+  Flow,
+  CategoryData,
+  RunningMap,
+} from '../shared/types';
 
 const ptyDataListeners = new Map<string, Set<(data: string) => void>>();
 const ptyExitListeners = new Map<string, Set<(exitCode: number) => void>>();
@@ -58,6 +63,9 @@ const api = {
       ipcRenderer.on('flow:runComplete', listener);
       return () => ipcRenderer.off('flow:runComplete', listener);
     },
+  },
+  agents: {
+    list: (): Promise<AgentMonitorSnapshot> => ipcRenderer.invoke('agents:list'),
   },
   pty: {
     onData: (id: string, cb: (data: string) => void) =>

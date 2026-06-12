@@ -19,7 +19,8 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   box-shadow: var(--shadow-lift);
 }
 
@@ -133,6 +134,10 @@
   color: var(--text-secondary);
 }
 
+.flow-modal-chip-wide {
+  flex: 1 1 260px;
+}
+
 .flow-modal-chip-btn {
   cursor: pointer;
   transition: background var(--duration-fast) var(--ease-out),
@@ -175,6 +180,35 @@
   font-size: 12px;
   font-family: var(--font-ui);
   outline: none;
+}
+
+.flow-modal-chip-input,
+.flow-modal-number {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  outline: none;
+  min-width: 100px;
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+}
+
+.flow-modal-chip-input:focus,
+.flow-modal-number:focus {
+  border-color: var(--border-strong);
+  background: var(--bg-primary);
+}
+
+.flow-modal-chip-input-wide {
+  flex: 1;
+  min-width: 160px;
+}
+
+.flow-modal-number {
+  width: 52px;
+  min-width: 52px;
 }
 
 .flow-modal-time::-webkit-calendar-picker-indicator {

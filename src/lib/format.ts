@@ -1,6 +1,7 @@
 import type { FlowRun } from '../../electron/shared/types';
 
 export const STATUS_LABELS: Record<string, string> = {
+  running: 'En cours',
   success: 'Succès',
   error: 'Erreur',
 };

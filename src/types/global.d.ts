@@ -1,4 +1,9 @@
-import type { Flow, CategoryData, RunningMap } from '../../electron/shared/types';
+import type {
+  AgentMonitorSnapshot,
+  Flow,
+  CategoryData,
+  RunningMap,
+} from '../../electron/shared/types';
 
 declare global {
   interface Window {
@@ -19,6 +24,9 @@ declare global {
         onRunComplete: (
           cb: (payload: { flowId: string; ptyId: string; exitCode: number }) => void,
         ) => () => void;
+      };
+      agents: {
+        list: () => Promise<AgentMonitorSnapshot>;
       };
       pty: {
         onData: (id: string, cb: (data: string) => void) => () => void;

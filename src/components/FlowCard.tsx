@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Flow, FlowRun } from '../../electron/shared/types';
-import { formatSchedule } from '../lib/schedule';
 import { buildDotTooltip, getLastRun } from '../lib/format';
+import { formatFlowTrigger } from '../lib/triggers';
 import { LiveTerminal } from './LiveTerminal';
 
 const MAX_VISIBLE_RUNS = 5;
@@ -25,17 +25,23 @@ function PastLogTerminal({ flow, run }: { flow: Flow; run: FlowRun }) {
   const [log, setLog] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    if (run.logTimestamp) {
+    const load = () => {
+      if (!run.logTimestamp) {
+        setLog('\r\n  Log non disponible pour ce run.\r\n');
+        return;
+      }
       window.api.flow.getRunLog(flow.id, run.logTimestamp).then((data) => {
         if (!cancelled) setLog(data ?? '\r\n  Log non disponible pour ce run.\r\n');
       });
-    } else {
-      setLog('\r\n  Log non disponible pour ce run.\r\n');
-    }
+    };
+    load();
+    const timer =
+      run.status === 'running' ? window.setInterval(load, 1000) : undefined;
     return () => {
       cancelled = true;
+      if (timer) window.clearInterval(timer);
     };
-  }, [flow.id, run.logTimestamp]);
+  }, [flow.id, run.logTimestamp, run.status]);
   if (log === null) return null;
   return <LiveTerminal initialContent={log} scrollback={5000} />;
 }
@@ -54,8 +60,10 @@ export function FlowCard({
   onDragStart,
   onDragEnd,
 }: Props) {
-  const isRunning = !!ptyId;
   const lastRun = getLastRun(flow);
+  const hasLivePty = !!ptyId;
+  const isHeadlessRunning = !hasLivePty && lastRun?.status === 'running';
+  const isRunning = hasLivePty || isHeadlessRunning;
 
   const cardClasses = [
     'flow-card',
@@ -109,7 +117,7 @@ export function FlowCard({
               </button>
             )}
           </div>
-          <div className="flow-card-schedule">{formatSchedule(flow.schedule)}</div>
+          <div className="flow-card-schedule">{formatFlowTrigger(flow)}</div>
         </div>
 
         <div className="flow-card-right">
@@ -174,12 +182,12 @@ export function FlowCard({
         </div>
       </div>
 
-      {isRunning && ptyId && (
+      {hasLivePty && ptyId && (
         <div className="flow-card-terminal" style={{ display: isExpanded ? '' : 'none' }}>
           <LiveTerminal ptyId={ptyId} />
         </div>
       )}
-      {!isRunning && isExpanded && lastRun && (
+      {!hasLivePty && isExpanded && lastRun && (
         <div className="flow-card-terminal">
           <PastLogTerminal flow={flow} run={lastRun} />
         </div>

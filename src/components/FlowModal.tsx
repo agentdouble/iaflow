@@ -4,6 +4,7 @@ import type {
   Category,
   Flow,
   ScheduleType,
+  TriggerType,
 } from '../../electron/shared/types';
 import {
   DAY_NAMES,
@@ -14,6 +15,14 @@ import {
   WEEKDAY_INDICES,
   buildScheduleData,
 } from '../lib/schedule';
+import {
+  DEFAULT_HOOK_DEBOUNCE_SECONDS,
+  DEFAULT_HOOK_EVENT,
+  HOOK_PROVIDER_OPTIONS,
+  TRIGGER_TYPE_LABELS,
+  buildHookTrigger,
+  joinPathPatterns,
+} from '../lib/triggers';
 import { generateId } from '../lib/id';
 
 const AGENT_OPTIONS: Record<AgentType, string> = {
@@ -29,7 +38,7 @@ const SKIP_PERM_CONFIG: Partial<Record<AgentType, { label: string; title: string
   },
   codex: {
     label: 'Full auto',
-    title: 'Lance Codex avec --approval-mode full-auto au lieu de auto-edit',
+    title: 'Lance Codex avec sandbox danger-full-access, approval never et exec',
   },
 };
 
@@ -72,9 +81,18 @@ export function FlowModal({
   const [days, setDays] = useState<Set<number>>(
     new Set(existing?.schedule?.days ?? WEEKDAY_INDICES),
   );
+  const [triggerType, setTriggerType] = useState<TriggerType>(
+    existing?.triggerType ?? (existing?.hookTrigger ? 'hook' : 'schedule'),
+  );
+  const [hookEvent, setHookEvent] = useState(existing?.hookTrigger?.event ?? DEFAULT_HOOK_EVENT);
+  const [hookProvider, setHookProvider] = useState(existing?.hookTrigger?.provider ?? 'any');
+  const [hookPaths, setHookPaths] = useState(joinPathPatterns(existing?.hookTrigger?.paths));
+  const [hookDebounce, setHookDebounce] = useState(
+    String(existing?.hookTrigger?.debounceSeconds ?? DEFAULT_HOOK_DEBOUNCE_SECONDS),
+  );
   const [catId, setCatId] = useState<string>(existingCategoryId ?? '');
 
-  const [errors, setErrors] = useState<{ name?: boolean; prompt?: boolean }>({});
+  const [errors, setErrors] = useState<{ name?: boolean; prompt?: boolean; hookEvent?: boolean }>({});
 
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -101,6 +119,7 @@ export function FlowModal({
     setName('');
     setPrompt('');
     setCwd('');
+    setHookPaths('');
   };
 
   const submit = () => {
@@ -109,18 +128,25 @@ export function FlowModal({
     const newErrors: typeof errors = {};
     if (!trimmedName) newErrors.name = true;
     if (!trimmedPrompt) newErrors.prompt = true;
+    if (triggerType === 'hook' && !hookEvent.trim()) newErrors.hookEvent = true;
     if (Object.keys(newErrors).length) {
       setErrors(newErrors);
       return;
     }
 
+    const schedule = buildScheduleData(scheduleType, time, intervalHours, days);
     const flow: Flow = {
       id: existing?.id ?? generateId(),
       name: trimmedName,
       prompt: trimmedPrompt,
       agent,
       cwd: cwd || undefined,
-      schedule: buildScheduleData(scheduleType, time, intervalHours, days),
+      schedule,
+      triggerType,
+      hookTrigger:
+        triggerType === 'hook'
+          ? buildHookTrigger(hookEvent, hookProvider, hookPaths, hookDebounce)
+          : undefined,
       dangerouslySkipPermissions: !!skipPermCfg && skipPerm,
       enabled: existing?.enabled ?? true,
       runs: existing?.runs ?? [],
@@ -231,13 +257,13 @@ export function FlowModal({
           )}
 
           <div className="flow-modal-chip">
-            <span>🕐</span>
+            <span>Trigger</span>
             <select
               className="flow-modal-select"
-              value={scheduleType}
-              onChange={(e) => setScheduleType(e.target.value as ScheduleType)}
+              value={triggerType}
+              onChange={(e) => setTriggerType(e.target.value as TriggerType)}
             >
-              {Object.entries(SCHEDULE_LABELS).map(([v, label]) => (
+              {Object.entries(TRIGGER_TYPE_LABELS).map(([v, label]) => (
                 <option key={v} value={v}>
                   {label}
                 </option>
@@ -245,7 +271,24 @@ export function FlowModal({
             </select>
           </div>
 
-          {chips.time && (
+          {triggerType === 'schedule' && (
+            <div className="flow-modal-chip">
+              <span>🕐</span>
+              <select
+                className="flow-modal-select"
+                value={scheduleType}
+                onChange={(e) => setScheduleType(e.target.value as ScheduleType)}
+              >
+                {Object.entries(SCHEDULE_LABELS).map(([v, label]) => (
+                  <option key={v} value={v}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {triggerType === 'schedule' && chips.time && (
             <div className="flow-modal-chip">
               <input
                 type="time"
@@ -256,7 +299,7 @@ export function FlowModal({
             </div>
           )}
 
-          {chips.interval && (
+          {triggerType === 'schedule' && chips.interval && (
             <div className="flow-modal-chip">
               <span style={{ fontSize: 11 }}>Toutes les</span>
               <select
@@ -273,7 +316,7 @@ export function FlowModal({
             </div>
           )}
 
-          {chips.days && (
+          {triggerType === 'schedule' && chips.days && (
             <div className="flow-modal-chip flow-modal-days">
               {DAY_NAMES.map((d, idx) => (
                 <button
@@ -294,6 +337,60 @@ export function FlowModal({
                 </button>
               ))}
             </div>
+          )}
+
+          {triggerType === 'hook' && (
+            <>
+              <div className="flow-modal-chip">
+                <span>Event</span>
+                <input
+                  className={`flow-modal-chip-input${errors.hookEvent ? ' flow-modal-error' : ''}`}
+                  value={hookEvent}
+                  placeholder={DEFAULT_HOOK_EVENT}
+                  onChange={(e) => {
+                    setHookEvent(e.target.value);
+                    if (errors.hookEvent) setErrors((s) => ({ ...s, hookEvent: false }));
+                  }}
+                />
+              </div>
+
+              <div className="flow-modal-chip">
+                <span>Source</span>
+                <select
+                  className="flow-modal-select"
+                  value={hookProvider}
+                  onChange={(e) => setHookProvider(e.target.value)}
+                >
+                  {HOOK_PROVIDER_OPTIONS.map((provider) => (
+                    <option key={provider} value={provider}>
+                      {provider}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flow-modal-chip flow-modal-chip-wide">
+                <span>Paths</span>
+                <input
+                  className="flow-modal-chip-input flow-modal-chip-input-wide"
+                  value={hookPaths}
+                  placeholder="src/**/*.ts, src/**/*.tsx"
+                  onChange={(e) => setHookPaths(e.target.value)}
+                />
+              </div>
+
+              <div className="flow-modal-chip">
+                <span>Debounce</span>
+                <input
+                  type="number"
+                  min={0}
+                  className="flow-modal-number"
+                  value={hookDebounce}
+                  onChange={(e) => setHookDebounce(e.target.value)}
+                />
+                <span>s</span>
+              </div>
+            </>
           )}
         </div>
 
